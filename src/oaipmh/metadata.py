@@ -67,17 +67,17 @@ class MetadataReader(object):
         # now extra field info according to xpath expr
         for field_name, (field_type, expr) in list(self._fields.items()):
             if field_type == 'bytes':
-                value = str(e(expr))
+                value = str(e(expr, namespace=self._namespaces))
             elif field_type == 'bytesList':
-                value = [str(item) for item in e(expr)]
+                value = [str(item) for item in e(expr, namespace=self._namespaces)]
             elif field_type == 'text':
                 # make sure we get back unicode strings instead
                 # of lxml.etree._ElementUnicodeResult objects.
-                value = text_type(e(expr))
+                value = text_type(e(expr, namespace=self._namespaces))
             elif field_type == 'textList':
                 # make sure we get back unicode strings instead
                 # of lxml.etree._ElementUnicodeResult objects.
-                value = [text_type(v) for v in e(expr)]
+                value = [text_type(v) for v in e(expr, namespace=self._namespaces)]
             else:
                 raise Error("Unknown field type: %s" % field_type)
             map[field_name] = value

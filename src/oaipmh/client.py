@@ -147,15 +147,15 @@ class BaseClient(common.OAIPMH):
         )[0]
         e = identify_node.xpath
 
-        repositoryName = e('string(oai:repositoryName/text())')
-        baseURL = e('string(oai:baseURL/text())')
-        protocolVersion = e('string(oai:protocolVersion/text())')
-        adminEmails = e('oai:adminEmail/text()')
+        repositoryName = e('string(oai:repositoryName/text())', namespaces=namespaces)
+        baseURL = e('string(oai:baseURL/text())', namespaces=namespaces)
+        protocolVersion = e('string(oai:protocolVersion/text())', namespaces=namespaces)
+        adminEmails = e('oai:adminEmail/text()', namespaces=namespaces)
         earliestDatestamp = datestamp_to_datetime(
-            e('string(oai:earliestDatestamp/text())'))
-        deletedRecord = e('string(oai:deletedRecord/text())')
-        granularity = e('string(oai:granularity/text())')
-        compression = e('oai:compression/text()')
+            e('string(oai:earliestDatestamp/text())', namespaces=namespaces))
+        deletedRecord = e('string(oai:deletedRecord/text())', namespaces=namespaces)
+        granularity = e('string(oai:granularity/text())', namespaces=namespaces)
+        compression = e('oai:compression/text()', namespaces=namespaces)
         # XXX description
         identify = common.Identify(
             repositoryName, baseURL, protocolVersion,
@@ -182,9 +182,9 @@ class BaseClient(common.OAIPMH):
         metadataFormats = []
         for metadataFormat_node in metadataFormat_nodes:
             e = metadataFormat_node.xpath
-            metadataPrefix = e('string(oai:metadataPrefix/text())')
-            schema = e('string(oai:schema/text())')
-            metadataNamespace = e('string(oai:metadataNamespace/text())')
+            metadataPrefix = e('string(oai:metadataPrefix/text())', namespaces=namespaces)
+            schema = e('string(oai:schema/text())', namespaces=namespaces)
+            metadataNamespace = e('string(oai:metadataNamespace/text())', namespaces=namespaces)
             metadataFormat = (metadataPrefix, schema, metadataNamespace)
             metadataFormats.append(metadataFormat)
 
@@ -232,11 +232,11 @@ class BaseClient(common.OAIPMH):
         for record_node in record_nodes:
             e = record_node.xpath
             # find header node
-            header_node = e('oai:header')[0]
+            header_node = e('oai:header', namespaces=namespaces)[0]
             # create header
             header = buildHeader(header_node, namespaces)
             # find metadata node
-            metadata_list = e('oai:metadata')
+            metadata_list = e('oai:metadata', namespaces=namespaces)
             if metadata_list:
                 metadata_node = metadata_list[0]
                 # create metadata
@@ -282,8 +282,8 @@ class BaseClient(common.OAIPMH):
             e = set_node.xpath
             # make sure we get back unicode strings instead
             # of lxml.etree._ElementUnicodeResult objects.
-            setSpec = six.text_type(e('string(oai:setSpec/text())'))
-            setName = six.text_type(e('string(oai:setName/text())'))
+            setSpec = six.text_type(e('string(oai:setSpec/text())', namespaces=namespaces))
+            setName = six.text_type(e('string(oai:setName/text())', namespaces=namespaces))
             # XXX setDescription nodes
             sets.append((setSpec, setName, None))
         return sets, token
@@ -360,11 +360,11 @@ class Client(BaseClient):
 
 def buildHeader(header_node, namespaces):
     e = header_node.xpath
-    identifier = e('string(oai:identifier/text())')
+    identifier = e('string(oai:identifier/text())', namespaces=namespaces)
     datestamp = datestamp_to_datetime(
-        str(e('string(oai:datestamp/text())')))
-    setspec = [str(s) for s in e('oai:setSpec/text()')]
-    deleted = e("@status = 'deleted'")
+        str(e('string(oai:datestamp/text())', namespaces=namespaces)))
+    setspec = [str(s) for s in e('oai:setSpec/text()', namespaces=namespaces)]
+    deleted = e("@status = 'deleted'", namespaces=namespaces)
     return common.Header(header_node, identifier, datestamp, setspec, deleted)
 
 def ResumptionListGenerator(firstBatch, nextBatch):
