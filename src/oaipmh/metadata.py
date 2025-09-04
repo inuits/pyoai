@@ -78,23 +78,6 @@ class MetadataReader(object):
                 # make sure we get back unicode strings instead
                 # of lxml.etree._ElementUnicodeResult objects.
                 value = [text_type(v) for v in e(expr, namespace=self._namespaces)]
-            elif field_type == 'textList':
-                # Make sure we get back unicode strings instead
-                # of lxml.etree._ElementUnicodeResult objects.
-
-                # Run the XPath query and get the result
-                result = e(expr, namespace=self._namespaces)
-
-                # Check if the result is a list. If not, treat it as a single item.
-                if isinstance(result, list):
-                    # The result is a list, so iterate and convert each element
-                    value = [text_type(v) for v in result]
-                elif result is not None:
-                    # The result is a single value, so wrap it in a list
-                    value = [text_type(result)]
-                else:
-                    # The result is None (e.g., no match), so return an empty list
-                    value = []
             else:
                 raise Error("Unknown field type: %s" % field_type)
             map[field_name] = value
