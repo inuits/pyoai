@@ -79,7 +79,7 @@ class MetadataReader(object):
                 # of lxml.etree._ElementUnicodeResult objects.
 
                 # Run the XPath query and get the result
-                result = e(expr, namespace=self._namespaces)
+                result = e(expr)
 
                 # Check if the result is a list. If not, treat it as a single item.
                 if isinstance(result, list):
