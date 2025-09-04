@@ -335,7 +335,7 @@ class Client(BaseClient):
         self._local_file = local_file
         self._force_http_get = force_http_get
         if credentials is not None:
-            self._credentials = base64.encodestring('%s:%s' % credentials)
+            self._credentials = base64.encodebytes(credentials.encode()).decode()
         else:
             self._credentials = None
 
