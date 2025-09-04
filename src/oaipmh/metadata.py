@@ -77,6 +77,7 @@ class MetadataReader(object):
             elif field_type == 'textList':
                 # make sure we get back unicode strings instead
                 # of lxml.etree._ElementUnicodeResult objects.
+                raise Exception(f"{element} - {expr} - {self._namespaces}")
                 value = [text_type(v) for v in e(expr, namespace=self._namespaces)]
             else:
                 raise Error("Unknown field type: %s" % field_type)
