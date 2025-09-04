@@ -1,7 +1,5 @@
 import sys
 
-from lxml import etree
-from lxml.etree import SubElement
 from oaipmh import common
 
 if sys.version_info[0] == 3:
@@ -21,7 +19,7 @@ class MetadataRegistry(object):
     def __init__(self):
         self._readers = {}
         self._writers = {}
-        
+
     def registerReader(self, metadata_prefix, reader):
         self._readers[metadata_prefix] = reader
 
@@ -30,10 +28,10 @@ class MetadataRegistry(object):
 
     def hasReader(self, metadata_prefix):
         return metadata_prefix in self._readers
-    
+
     def hasWriter(self, metadata_prefix):
         return metadata_prefix in self._writers
-    
+
     def readMetadata(self, metadata_prefix, element):
         """Turn XML into metadata object.
 
@@ -45,7 +43,7 @@ class MetadataRegistry(object):
 
     def writeMetadata(self, metadata_prefix, element, metadata):
         """Write metadata as XML.
-        
+
         element - ElementTree element to write under
         metadata - metadata object to write
         """
@@ -65,11 +63,7 @@ class MetadataReader(object):
 
     def __call__(self, element):
         map = {}
-        # create XPathEvaluator for this element
-        xpath_evaluator = etree.XPathEvaluator(element, 
-                                               namespaces=self._namespaces)
-        
-        e = xpath_evaluator.evaluate
+        e = element.xpath
         # now extra field info according to xpath expr
         for field_name, (field_type, expr) in list(self._fields.items()):
             if field_type == 'bytes':
@@ -111,6 +105,3 @@ oai_dc_reader = MetadataReader(
     'oai_dc': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
     'dc' : 'http://purl.org/dc/elements/1.1/'}
     )
-
-
-    

@@ -12,7 +12,6 @@ except ImportError:
     import urllib2
     from urllib import urlencode
 
-import sys
 import base64
 from lxml import etree
 import time
@@ -142,12 +141,11 @@ class BaseClient(common.OAIPMH):
 
     def Identify_impl(self, args, tree):
         namespaces = self.getNamespaces()
-        evaluator = etree.XPathEvaluator(tree, namespaces=namespaces)
-        identify_node = evaluator.evaluate(
-            '/oai:OAI-PMH/oai:Identify')[0]
-        identify_evaluator = etree.XPathEvaluator(identify_node,
-                                                  namespaces=namespaces)
-        e = identify_evaluator.evaluate
+        identify_node = tree.xpath(
+            '/oai:OAI-PMH/oai:Identify',
+            namespaces=namespaces
+        )[0]
+        e = identify_node.xpath
 
         repositoryName = e('string(oai:repositoryName/text())')
         baseURL = e('string(oai:baseURL/text())')
@@ -177,15 +175,13 @@ class BaseClient(common.OAIPMH):
 
     def ListMetadataFormats_impl(self, args, tree):
         namespaces = self.getNamespaces()
-        evaluator = etree.XPathEvaluator(tree,
-                                         namespaces=namespaces)
-
-        metadataFormat_nodes = evaluator.evaluate(
-            '/oai:OAI-PMH/oai:ListMetadataFormats/oai:metadataFormat')
+        metadataFormat_nodes = tree.xpath(
+            '/oai:OAI-PMH/oai:ListMetadataFormats/oai:metadataFormat',
+            namespaces=namespaces
+        )
         metadataFormats = []
         for metadataFormat_node in metadataFormat_nodes:
-            e = etree.XPathEvaluator(metadataFormat_node,
-                                     namespaces=namespaces).evaluate
+            e = metadataFormat_node.xpath
             metadataPrefix = e('string(oai:metadataPrefix/text())')
             schema = e('string(oai:schema/text())')
             metadataNamespace = e('string(oai:metadataNamespace/text())')
@@ -224,22 +220,17 @@ class BaseClient(common.OAIPMH):
 
     # various helper methods
 
-    def buildRecords(self,
-                     metadata_prefix, namespaces, metadata_registry, tree):
-        # first find resumption token if available
-        evaluator = etree.XPathEvaluator(tree,
-                                         namespaces=namespaces)
-        token = evaluator.evaluate(
-            'string(/oai:OAI-PMH/*/oai:resumptionToken/text())')
+    def buildRecords(self, metadata_prefix, namespaces, metadata_registry, tree):
+        token = tree.xpath(
+            'string(/oai:OAI-PMH/*/oai:resumptionToken/text())',
+            namespaces=namespaces
+        )
         if token.strip() == '':
             token = None
-        record_nodes = evaluator.evaluate(
-            '/oai:OAI-PMH/*/oai:record')
+        record_nodes = tree.xpath('/oai:OAI-PMH/*/oai:record', namespaces=namespaces)
         result = []
         for record_node in record_nodes:
-            record_evaluator = etree.XPathEvaluator(record_node,
-                                                    namespaces=namespaces)
-            e = record_evaluator.evaluate
+            e = record_node.xpath
             # find header node
             header_node = e('oai:header')[0]
             # create header
@@ -258,16 +249,17 @@ class BaseClient(common.OAIPMH):
         return result, token
 
     def buildIdentifiers(self, namespaces, tree):
-        evaluator = etree.XPathEvaluator(tree,
-                                         namespaces=namespaces)
-        # first find resumption token is available
-        token = evaluator.evaluate(
-            'string(/oai:OAI-PMH/*/oai:resumptionToken/text())')
         #'string(/oai:OAI-PMH/oai:ListIdentifiers/oai:resumptionToken/text())')
+        token = tree.xpath(
+            'string(/oai:OAI-PMH/*/oai:resumptionToken/text())',
+            namespaces=namespaces
+        )
         if token.strip() == '':
             token = None
-        header_nodes = evaluator.evaluate(
-                '/oai:OAI-PMH/oai:ListIdentifiers/oai:header')
+        header_nodes = tree.xpath(
+            '/oai:OAI-PMH/oai:ListIdentifiers/oai:header',
+            namespaces=namespaces
+        )
         result = []
         for header_node in header_nodes:
             header = buildHeader(header_node, namespaces)
@@ -275,19 +267,19 @@ class BaseClient(common.OAIPMH):
         return result, token
 
     def buildSets(self, namespaces, tree):
-        evaluator = etree.XPathEvaluator(tree,
-                                         namespaces=namespaces)
-        # first find resumption token if available
-        token = evaluator.evaluate(
-            'string(/oai:OAI-PMH/oai:ListSets/oai:resumptionToken/text())')
+        token = tree.xpath(
+            'string(/oai:OAI-PMH/oai:ListSets/oai:resumptionToken/text())',
+            namespaces=namespaces
+        )
         if token.strip() == '':
             token = None
-        set_nodes = evaluator.evaluate(
-            '/oai:OAI-PMH/oai:ListSets/oai:set')
+        set_nodes = tree.xpath(
+            '/oai:OAI-PMH/oai:ListSets/oai:set',
+            namespaces=namespaces
+        )
         sets = []
         for set_node in set_nodes:
-            e = etree.XPathEvaluator(set_node,
-                                     namespaces=namespaces).evaluate
+            e = set_node.xpath
             # make sure we get back unicode strings instead
             # of lxml.etree._ElementUnicodeResult objects.
             setSpec = six.text_type(e('string(oai:setSpec/text())'))
@@ -367,8 +359,7 @@ class Client(BaseClient):
             )
 
 def buildHeader(header_node, namespaces):
-    e = etree.XPathEvaluator(header_node,
-                            namespaces=namespaces).evaluate
+    e = header_node.xpath
     identifier = e('string(oai:identifier/text())')
     datestamp = datestamp_to_datetime(
         str(e('string(oai:datestamp/text())')))
