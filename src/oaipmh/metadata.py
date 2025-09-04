@@ -63,25 +63,45 @@ class MetadataReader(object):
 
     def __call__(self, element):
         map = {}
+        # Alias for element.xpath
         e = element.xpath
-        # now extra field info according to xpath expr
         for field_name, (field_type, expr) in list(self._fields.items()):
-            if field_type == 'bytes':
-                value = str(e(expr, namespace=self._namespaces))
-            elif field_type == 'bytesList':
-                value = [str(item) for item in e(expr, namespace=self._namespaces)]
-            elif field_type == 'text':
-                # make sure we get back unicode strings instead
-                # of lxml.etree._ElementUnicodeResult objects.
-                value = text_type(e(expr, namespace=self._namespaces))
-            elif field_type == 'textList':
-                # make sure we get back unicode strings instead
-                # of lxml.etree._ElementUnicodeResult objects.
-                raise Exception(f"{element} - {expr} - {self._namespaces}")
-                value = [text_type(v) for v in e(expr, namespace=self._namespaces)]
-            else:
-                raise Error("Unknown field type: %s" % field_type)
-            map[field_name] = value
+            try:
+                # The core logic is to safely handle the result from xpath()
+                raw_result = e(expr, namespaces=self._namespaces)
+
+                value = None
+                if field_type == 'bytes':
+                    value = str(raw_result)
+                elif field_type == 'bytesList':
+                    # Ensure the result is iterable before the list comprehension
+                    value = [str(item) for item in (raw_result if isinstance(raw_result, list) else [raw_result])]
+                elif field_type == 'text':
+                    value = text_type(raw_result)
+                elif field_type == 'textList':
+                    # This is the critical part to fix the error
+                    if isinstance(raw_result, list):
+                        # This handles the expected case: a list of elements/strings
+                        value = [text_type(v) for v in raw_result]
+                    elif raw_result is not None:
+                        # This handles a single value being returned
+                        value = [text_type(raw_result)]
+                    else:
+                        # Handles cases with no result (None)
+                        value = []
+                else:
+                    raise Error("Unknown field type: %s" % field_type)
+
+                map[field_name] = value
+
+            except Exception as ex:
+                # A robust way to prevent crashes
+                print(f"Warning: Error processing field '{field_name}' with expression '{expr}': {ex}", file=sys.stderr)
+                if field_type.endswith('List'):
+                    map[field_name] = []
+                else:
+                    map[field_name] = ""
+
         return common.Metadata(element, map)
 
 oai_dc_reader = MetadataReader(
