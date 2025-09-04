@@ -75,10 +75,6 @@ class MetadataReader(object):
                 # of lxml.etree._ElementUnicodeResult objects.
                 value = text_type(e(expr, namespace=self._namespaces))
             elif field_type == 'textList':
-                # make sure we get back unicode strings instead
-                # of lxml.etree._ElementUnicodeResult objects.
-                value = [text_type(v) for v in e(expr, namespace=self._namespaces)]
-            elif field_type == 'textList':
                 # Make sure we get back unicode strings instead
                 # of lxml.etree._ElementUnicodeResult objects.
 
