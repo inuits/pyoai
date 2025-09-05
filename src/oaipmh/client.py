@@ -319,22 +319,32 @@ class BaseClient(common.OAIPMH):
 
 class Client(BaseClient):
 
-    def __init__(self, base_url, metadata_registry=None, credentials=None,
-                 local_file=False, force_http_get=False, custom_retry_policy=None):
-        BaseClient.__init__(self, metadata_registry,
-                            custom_retry_policy=custom_retry_policy)
+    def __init__(
+        self,
+        base_url,
+        metadata_registry=None,
+        credentials=None,
+        local_file=False,
+        force_http_get=False,
+        custom_retry_policy=None,
+        raw_data=None,
+    ):
+        BaseClient.__init__(
+            self, metadata_registry, custom_retry_policy=custom_retry_policy
+        )
         self._base_url = base_url
         self._local_file = local_file
         self._force_http_get = force_http_get
+        self._raw_data = raw_data
         if credentials is not None:
             self._credentials = base64.encodebytes(credentials.encode()).decode()
         else:
             self._credentials = None
 
     def makeRequest(self, **kw):
-        """Either load a local XML file or actually retrieve XML from a server.
-        """
-        if self._local_file:
+        if isinstance(self._raw_data, str):
+            return self._raw_data.encode('ascii', 'replace')
+        elif self._local_file:
             with codecs.open(self._base_url, 'r', 'utf-8') as xmlfile:
                 text = xmlfile.read()
             return text.encode('ascii', 'replace')
