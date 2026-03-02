@@ -39,7 +39,7 @@ class BaseClient(common.OAIPMH):
         'expected-errcodes': {503},
     }
 
-    def __init__(self, metadata_registry=None, custom_retry_policy=None):
+    def __init__(self, metadata_registry=None, custom_retry_policy=None, raw_data=None):
         self._metadata_registry = (
             metadata_registry or metadata.global_metadata_registry)
         self._ignore_bad_character_hack = 0
@@ -47,6 +47,7 @@ class BaseClient(common.OAIPMH):
         self.retry_policy = self.default_retry_policy.copy()
         if custom_retry_policy is not None:
             self.retry_policy.update(custom_retry_policy)
+        self._raw_data = raw_data
 
     def updateGranularity(self):
         """Update the granularity setting dependent on that the server says.
@@ -225,7 +226,7 @@ class BaseClient(common.OAIPMH):
             'string(/oai:OAI-PMH/*/oai:resumptionToken/text())',
             namespaces=namespaces
         )
-        if token.strip() == '':
+        if token.strip() == '' or self._raw_data:
             token = None
         record_nodes = tree.xpath('/oai:OAI-PMH/*/oai:record', namespaces=namespaces)
         result = []
@@ -330,12 +331,11 @@ class Client(BaseClient):
         raw_data=None,
     ):
         BaseClient.__init__(
-            self, metadata_registry, custom_retry_policy=custom_retry_policy
+            self, metadata_registry, custom_retry_policy=custom_retry_policy, raw_data=raw_data
         )
         self._base_url = base_url
         self._local_file = local_file
         self._force_http_get = force_http_get
-        self._raw_data = raw_data
         if credentials is not None:
             self._credentials = base64.encodebytes(credentials.encode()).decode()
         else:
